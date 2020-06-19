@@ -57,6 +57,8 @@ print(f"{file_path}: {total_num_bytes} bytes")
 # Reset file position to start
 img_file.seek(0, 0)
 num_bytes_read = 0
+status_num = 0
+avg_elapsed_time = 0
 
 # Set up some meta data
 sliding_window_size = 16
@@ -124,7 +126,9 @@ while num_bytes_read < total_num_bytes:
     if (num_bytes_read % PRINT_AFTER_BYTES == 0):
         toc = time.perf_counter()
         elapsed_time = toc - tic
-        seconds_remaining = ((total_num_bytes - num_bytes_read) / PRINT_AFTER_BYTES) * elapsed_time
+        avg_elapsed_time = (avg_elapsed_time * status_num + elapsed_time) / (status_num + 1)
+        status_num += 1
+        seconds_remaining = ((total_num_bytes - num_bytes_read) / PRINT_AFTER_BYTES) * avg_elapsed_time
         seconds_remaining += 2
         print("%.3f %% (Estimated time left: %s)" % (num_bytes_read/total_num_bytes*100, datetime.timedelta(seconds = int(seconds_remaining))))
 
@@ -138,4 +142,5 @@ if showMore[0].upper() == 'Y':
     print('----------------------')
     print('')
     print('Raw signatures:')
-    print(raw_signatures)
+    for signature in raw_signatures:
+        print(signature)
