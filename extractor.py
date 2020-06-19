@@ -8,8 +8,8 @@ PRINT_AFTER_BYTES = 1048576
 # Lists to help find valid strings and potential password strings
 printable_chars = set(bytes(string.printable, 'ascii'))
 keywords = ['ADMINI', 'DOCUME', 'LOCALS']
+separator = ']||'
 potential_passwords = {}
-other_potential_passwords = {}
 raw_signatures = []
 
 
@@ -29,15 +29,23 @@ def check_window_for_keywords(sliding_window):
 # Helper function used for extracting potential passwords from a signature
 def extract_potential_passwords(signature):
     raw_signatures.append(signature)
-    index = signature.find('|')
+    index = signature.find(separator)
     if (index >= 0):
-        passwords = signature.split('|')
+        passwords = signature.split(separator)
         return passwords[1:]
     return []
 
 
-# file_path = 'zip.img'
-# file_name = 'bankdetails.zip'
+# Helper function for printing out the passwords
+def print_passwords():    
+    print('')
+    print('----------------------')
+    print('')
+    print('Potential Passwords:')
+    num_passwords = len(potential_passwords.items())
+    for x, y in potential_passwords.items():
+        print(f'[{y} hits]: {x}')
+    print('')
 
 file_path = input("Enter image file path:")
 file_name = input("Enter name of zip file:")
@@ -80,10 +88,10 @@ while num_bytes_read < total_num_bytes:
                 if (num_peeks_left > 0):
                     _tmp = extract_potential_passwords(curr_string)
                     for _pass in _tmp:
-                        if not (_pass in other_potential_passwords.keys()):
-                            other_potential_passwords[_pass] = 1
+                        if not (_pass in potential_passwords.keys()):
+                            potential_passwords[_pass] = 1
                         else:
-                            other_potential_passwords[_pass] += 1
+                            potential_passwords[_pass] += 1
                     num_peeks_left -= 1
 
                 # Found file name in a string
@@ -122,21 +130,7 @@ while num_bytes_read < total_num_bytes:
 
 img_file.close()
 
-print('')
-print('----------------------')
-print('')
-print('Potential Passwords:')
-for x, y in potential_passwords.items():
-  print(f'{x} ({y} hits)')
-print('')
-
-showMore = input('Show more options (y/n):')
-if showMore[0].upper() == 'Y':    
-    print('----------------------')
-    print('')
-    print('Extra Potential Passwords:')
-    for x, y in other_potential_passwords.items():
-        print(f'{x} ({y} hits)')
+print_passwords()
 
 print('')
 showMore = input('Show raw signatures (y/n):')
