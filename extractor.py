@@ -9,7 +9,8 @@ PRINT_AFTER_BYTES = 1048576
 printable_chars = set(bytes(string.printable, 'ascii'))
 keywords = ['ADMINI', 'DOCUME', 'LOCALS']
 potential_passwords = {}
-other_potential_passwords = []
+other_potential_passwords = {}
+raw_signatures = []
 
 
 # Helper function used for checking if all keywords can be found in the sliding window
@@ -27,18 +28,19 @@ def check_window_for_keywords(sliding_window):
 
 # Helper function used for extracting potential passwords from a signature
 def extract_potential_passwords(signature):
+    raw_signatures.append(signature)
     index = signature.find('|')
-    if (index > 0):
+    if (index >= 0):
         passwords = signature.split('|')
         return passwords[1:]
     return []
 
-file_path = 'zip.img'
-file_name = 'bankdetails.zip'
 
-# Uncomment two statements below if user input is preferred
-# file_path = input("Enter image file path:")
-# file_name = input("Enter name of zip file:")
+# file_path = 'zip.img'
+# file_name = 'bankdetails.zip'
+
+file_path = input("Enter image file path:")
+file_name = input("Enter name of zip file:")
 
 img_file = open(file_path, 'rb')
 total_num_bytes = os.stat(file_path).st_size
@@ -76,7 +78,12 @@ while num_bytes_read < total_num_bytes:
 
                 # Add string as an additional potential password if peeks left
                 if (num_peeks_left > 0):
-                    other_potential_passwords.append(curr_string)
+                    _tmp = extract_potential_passwords(curr_string)
+                    for _pass in _tmp:
+                        if not (_pass in other_potential_passwords.keys()):
+                            other_potential_passwords[_pass] = 1
+                        else:
+                            other_potential_passwords[_pass] += 1
                     num_peeks_left -= 1
 
                 # Found file name in a string
@@ -85,7 +92,6 @@ while num_bytes_read < total_num_bytes:
                     # If sliding window contains all keywords, start checking passwords
                     if (check_window_for_keywords(sliding_window)):
                         num_peeks_left = peeks_for_other_passwords
-                        other_potential_passwords.append(curr_string)
                         _tmp = extract_potential_passwords(curr_string)
                         for _pass in _tmp:
                             if not (_pass in potential_passwords.keys()):
@@ -115,6 +121,7 @@ while num_bytes_read < total_num_bytes:
         print("%.3f %% (Estimated time left: %s)" % (num_bytes_read/total_num_bytes*100, datetime.timedelta(seconds = int(seconds_remaining))))
 
 img_file.close()
+
 print('')
 print('----------------------')
 print('')
@@ -122,10 +129,19 @@ print('Potential Passwords:')
 for x, y in potential_passwords.items():
   print(f'{x} ({y} hits)')
 print('')
-print('----------------------')
+
+showMore = input('Show more options (y/n):')
+if showMore[0].upper() == 'Y':    
+    print('----------------------')
+    print('')
+    print('Extra Potential Passwords:')
+    for x, y in other_potential_passwords.items():
+        print(f'{x} ({y} hits)')
+
 print('')
-print('Extra Potential Passwords: (unrefined strings)')
-print(other_potential_passwords)
-print('')
-print('----------------------')
-print('')
+showMore = input('Show raw signatures (y/n):')
+if showMore[0].upper() == 'Y':    
+    print('----------------------')
+    print('')
+    print('Raw signatures:')
+    print(raw_signatures)
