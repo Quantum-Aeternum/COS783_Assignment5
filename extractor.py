@@ -3,14 +3,16 @@ import time
 import datetime
 import string
 
-PRINT_AFTER_BYTES = 1048576
+# Settings
+PRINT_AFTER_BYTES = 1048576 # Interval (in number of bytes) to print progress report
+printable_chars = set(bytes(string.printable, 'ascii')) # Which bytes to consider as valid characters
+keywords = ['ADMINI', 'DOCUME', 'LOCALS'] # Keywords (from the experiment footprints) that appear before the password
+separator = ']||' # The separator that indicates the start of the password
+sliding_window_size = 16 # Number of strings to hold in the window (which is checked for the keywords after finding the file name)
+peeks_for_other_passwords = 4 # Number of strings to check for passwords that aren't in the window yet (bytes to the right of the window)
 
-# Lists to help find valid strings and potential password strings
-printable_chars = set(bytes(string.printable, 'ascii'))
-keywords = ['ADMINI', 'DOCUME', 'LOCALS']
-separator = ']||'
-potential_passwords = {}
-raw_signatures = []
+file_path = input("Enter image file path:") # Relative path from the python script to the image file
+file_name = input("Enter name of zip file:") # Name of the (zip) file (with its extension) which was password protected
 
 
 # Helper function used for checking if all keywords can be found in the sliding window
@@ -47,9 +49,8 @@ def print_passwords():
         print(f'[{y} hits]: {x}')
     print('')
 
-file_path = input("Enter image file path:")
-file_name = input("Enter name of zip file:")
 
+# Get the size of the file
 img_file = open(file_path, 'rb')
 total_num_bytes = os.stat(file_path).st_size
 print(f"{file_path}: {total_num_bytes} bytes")
@@ -61,9 +62,9 @@ status_num = 0
 avg_elapsed_time = 0
 
 # Set up some meta data
-sliding_window_size = 16
 sliding_window = []
-peeks_for_other_passwords = 4
+potential_passwords = {}
+raw_signatures = []
 num_peeks_left = 0
 num_strings = 0
 curr_string = ""
@@ -134,8 +135,8 @@ while num_bytes_read < total_num_bytes:
 
 img_file.close()
 
+# Print findings
 print_passwords()
-
 print('')
 showMore = input('Show raw signatures (y/n):')
 if showMore[0].upper() == 'Y':    
